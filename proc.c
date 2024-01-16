@@ -579,7 +579,6 @@ void get_sharedmem(int id, char **pointer)
   init_shared_memory_table();
   acquiresleep(&shared_memory_table[id].lock);
   // cprintf("get_sharedmem called, pid:%d, ref_count:%d\n", myproc()->pid, shared_memory_table[id].ref_count);
-
   if (shared_memory_table[id].ref_count == 0)
   {
     char *memory = kalloc();
@@ -591,16 +590,9 @@ void get_sharedmem(int id, char **pointer)
     // allocating from the top of user space
     void *address = (void *)(curproc->top - PGSIZE); // address is virtual, specific to each process
     curproc->top -= PGSIZE;                          // update top for the next allocation
-
     memset(memory, 0, PGSIZE);
-
     mappages(curproc->pgdir, address, PGSIZE, V2P(memory), PTE_W | PTE_U);
-
     *pointer = address;
-    // strncpy(memory, "Hello, World!", PGSIZE);
-    // cprintf("the value for id %d is %s\n", id, memory);
-    // cprintf("the memory address in kernel is %p\n", memory);
-    // curproc->shared_memory = V2P(memory);
     shared_memory_table[id].physical_memory = V2P(memory);
   }
   else
@@ -611,12 +603,9 @@ void get_sharedmem(int id, char **pointer)
     void *address = (void *)(curproc->top - PGSIZE);
     curproc->top -= PGSIZE;
     mappages(curproc->pgdir, address, PGSIZE, physical_address, PTE_W | PTE_U);
-    // cprintf("address in new process is %p\n", physical_address);
-    //  curproc->shared_memory = physical_address;
     *pointer = address;
   }
   shared_memory_table[id].ref_count++;
-
   releasesleep(&shared_memory_table[id].lock);
 }
 
@@ -625,13 +614,11 @@ void dump_sharedmem(int id)
   init_shared_memory_table();
   acquiresleep(&shared_memory_table[id].lock);
   // cprintf("dump_sharedmem called, pid:%d, ref_count:%d\n", myproc()->pid, shared_memory_table[id].ref_count);
-
   if (id >= MAX_SHARED_MEM)
   {
     cprintf("dump_sharedmem: shared mem id out of index\n");
     return;
   }
-
   if (shared_memory_table[id].ref_count > 0)
   {
     shared_memory_table[id].ref_count--;
